@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "prism": {
+      "type": "stdio",
+      "command": "prism",
+      "args": ["mcp", "serve", "--read-only"]
+    }
+  }
+}

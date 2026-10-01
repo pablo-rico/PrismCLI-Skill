@@ -1,0 +1,7 @@
+interface:
+  display_name: "Prism"
+  short_description: "Prism tasks, sprints, boards and meetings via the prism CLI or its MCP server"
+  default_prompt: "What Prism tasks are assigned to me in the active sprint?"
+
+policy:
+  allow_implicit_invocation: true

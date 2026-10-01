@@ -1,0 +1,17 @@
+{
+  "name": "misoncotech",
+  "description": "MisoncoTech plugins for AI agents: the Prism skill and MCP server",
+  "owner": {
+    "name": "MisoncoTech",
+    "url": "https://prism.misoncotech.com"
+  },
+  "plugins": [
+    {
+      "name": "prism",
+      "source": "./plugins/prism",
+      "description": "Use Prism (projects, tasks, sprints, boards, meetings) through the prism CLI and its MCP server",
+      "category": "productivity",
+      "tags": ["prism", "project-management", "tasks", "mcp", "cli"]
+    }
+  ]
+}
