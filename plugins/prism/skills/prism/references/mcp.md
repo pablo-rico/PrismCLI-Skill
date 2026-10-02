@@ -36,7 +36,7 @@ Parameters marked * are required. Scope is the personal access token scope the t
 | `list_projects` | workspace_id, limit | Projects of a workspace |
 | `get_project` | project_id | One project |
 | `list_templates` | workspace_id, limit | Built-in and saved project templates |
-| `create_project` (`projects:write`) | workspace_id, name*, description, visibility, template | New project, optionally from a template |
+| `create_project` (`projects:write`) | workspace_id, name*, description, visibility, template, customer_id | New project, optionally from a template and linked to a customer |
 | `search` | q*, workspace_id, types, limit | Full text over tasks, projects, meetings, comments |
 
 ### Tasks (scope `read` / `tasks:write`)
@@ -78,8 +78,29 @@ Parameters marked * are required. Scope is the personal access token scope the t
 | `list_activity` | read | client_id, resource_type, action, since, limit | Audit log of a client |
 | `activity_feed` | read | workspace_id, project_id, actor, resource_type, action, limit | Workspace feed the user can see |
 
+### Customers (CRM) and noticeboard
+
+`customer_id` accepts an ID, prefix, exact name or tax ID; `entry_id` an ID, prefix or exact title. Both are
+looked up in `workspace_id` (default: the CLI context).
+
+| Tool | Scope | Parameters | Use |
+|---|---|---|---|
+| `list_customers` | read | workspace_id, search, status, owner, limit | Customers with owner, primary contact and project count |
+| `get_customer` | read | workspace_id, customer_id* | Customer with contacts and linked projects |
+| `list_customer_notes` | read | workspace_id, customer_id*, limit | Dated notes history, newest first |
+| `create_customer` | customers:write | workspace_id, name*, status, tax_id, email, phone, website, address, city, postal_code, country, notes, owner | Duplicate name or tax ID fails with `CUSTOMER_EXISTS` |
+| `update_customer` | customers:write | workspace_id, customer_id*, name, the fields above, clear_owner | An empty string clears a field |
+| `add_customer_contact` | customers:write | workspace_id, customer_id*, name*, email, phone, job_title, is_primary | |
+| `add_customer_note` | customers:write | workspace_id, customer_id*, body* | |
+| `list_noticeboard` | read | workspace_id, kind, status, highlights, limit | Entries (pinned first) and the user's permissions |
+| `get_noticeboard_entry` | read | workspace_id, entry_id* | Body, and for incidents status, severity and task |
+| `post_noticeboard_entry` | noticeboard:write | workspace_id, kind, title*, body, pinned, severity | Admins only; **notifies every member** |
+| `resolve_incident` / `reopen_incident` | noticeboard:write | workspace_id, entry_id* | |
+| `create_task_from_incident` | tasks:write | workspace_id, entry_id*, project_id, title, priority, assignee_ids | Returns {entry, task}; one live task per incident |
+
 **Not available over MCP** (use the CLI): workspaces and members, column and sprint management, attachments,
-custom field definitions, CSV exports, saving a project as a template, tokens and sessions, and raw API calls.
+custom field definitions, CSV exports, customer imports and deletions, editing or deleting noticeboard entries,
+saving a project as a template, tokens and sessions, and raw API calls.
 
 ## Typical flows
 
@@ -90,6 +111,9 @@ custom field definitions, CSV exports, saving a project as a template, tokens an
   `op: "update"`, `priority` and `add_assignees`.
 - **Sprint status**: `get_board`, or `list_statuses` for the counts per column.
 - **Log work**: `log_time` with `duration: "1h30m"` and a note, then `add_comment` if the user wants a summary.
+- **Customer follow-up**: `get_customer` (by name or tax ID), then `add_customer_note` with what was agreed.
+- **Incident to task**: `list_noticeboard` with `kind: "incident"`, `status: "open"`, then
+  `create_task_from_incident` in the project the user names.
 
 ## Server flags
 
@@ -97,7 +121,7 @@ custom field definitions, CSV exports, saving a project as a template, tokens an
 |---|---|
 | (none) | Read and write tools of every toolset, without the delete tools |
 | `--read-only` | Read tools only. This plugin registers the server this way |
-| `--toolsets a,b` | Only these groups: `context`, `projects`, `tasks`, `automations`, `sprints`, `meetings`, `notifications`, `search`, `activity` |
+| `--toolsets a,b` | Only these groups: `context`, `projects`, `tasks`, `automations`, `sprints`, `meetings`, `notifications`, `search`, `activity`, `customers`, `noticeboard` |
 | `--allow-destructive` | Also the delete tools. Not compatible with `--read-only` |
 
 `prism mcp tools [same flags]` lists what the server would register, with the kind and scope of each tool.
@@ -163,5 +187,10 @@ prism auth tokens create --name claude-all   --scope read --scope write --expire
 | projects, automations | `read` | `projects:write` |
 | meetings | `read` | `meetings:write` |
 | notifications | `read` | `notifications:write` |
+| customers | `read` | `customers:write` |
+| noticeboard | `read` | `noticeboard:write` (`create_task_from_incident`: `tasks:write`) |
+
+`write` expands to every `*:write` scope when the token is created, so a `write` token created before customers
+and the noticeboard existed lacks `customers:write` and `noticeboard:write`: create a new one.
 
 Never write a token into a file that is committed (for example a project `.mcp.json`).

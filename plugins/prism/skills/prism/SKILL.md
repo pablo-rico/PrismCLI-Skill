@@ -1,6 +1,6 @@
 ---
 name: prism
-description: Work in Prism, MisoncoTech's project management app (workspaces, projects, tasks, subtasks, dependencies, sprints, kanban boards, time tracking, automations, meetings, polls, notifications, search) through the `prism` CLI or the Prism MCP tools (list_tasks, get_board, create_task...). Use when the user mentions Prism or asks to list, create, update, move, assign, comment on or close tasks, check a sprint or board, log time, or take meeting notes in Prism, and to install, log in to, configure or troubleshoot the prism CLI or its MCP server.
+description: Work in Prism, MisoncoTech's project management app (workspaces, projects, tasks, subtasks, dependencies, sprints, kanban boards, time tracking, automations, meetings, polls, notifications, search, customers/CRM with contacts, notes and CSV/Excel import, and the workspace noticeboard of announcements and incidents) through the `prism` CLI or the Prism MCP tools (list_tasks, get_board, create_task, list_customers...). Use when the user mentions Prism or asks to list, create, update, move, assign, comment on or close tasks, check a sprint or board, log time, take meeting notes, manage or import customers, or post or resolve noticeboard incidents in Prism, and to install, log in to, configure or troubleshoot the prism CLI or its MCP server.
 ---
 
 # Prism
@@ -17,8 +17,8 @@ Prism is reached in two ways. Both act as the signed-in user, against the produc
 1. **The Prism MCP tools are available**: use them. They take structured arguments and return the API JSON.
 2. **No MCP tools, but you can run shell commands**: use the CLI with `--json`.
 3. **The task needs something MCP does not cover**: use the CLI. That includes workspaces, column and sprint
-   management, attachments, CSV exports, project templates saved from a project, tokens, sessions and raw API
-   calls (`prism api`).
+   management, attachments, CSV exports, customer imports and deletions, editing or deleting noticeboard entries,
+   project templates saved from a project, tokens, sessions and raw API calls (`prism api`).
 4. **A write tool you need is missing**: the server may run with `--read-only`, which is the default of this
    plugin. Use the CLI for the write, or ask the user to enable writes (see [references/mcp.md](references/mcp.md)).
 5. **Neither works** (`prism` not found, or exit 3 not authenticated): follow
@@ -52,6 +52,9 @@ With MCP, call `whoami`, then `list_workspaces` / `list_projects` when you need 
    (`https://prism.misoncotech.com`).
 6. **Work out the next step from the error code**, not by retrying blindly. See
    [references/troubleshooting.md](references/troubleshooting.md).
+7. **Customers are not clients.** A *client* (`prism client`) is the organization that owns the workspaces; the
+   companies a workspace works for are *customers* (`prism customer`, the CRM). Publishing on the noticeboard
+   notifies the whole workspace: only do it when the user asked for it.
 
 ## 4. CLI essentials
 
@@ -64,11 +67,13 @@ prism task comment add $T "Root cause: expired cookie" -q
 prism task time log $T 1h30m --note "Code review"
 prism board show -p $P --summary                 # tasks per column in the active sprint
 prism search "login" -w $WS --type task --json
+prism customer list -w $WS --mine --json --fields id,name,status,tax_id    # customers (CRM)
+prism noticeboard list -w $WS --kind incident --status open --json         # open incidents
 ```
 
 Commands follow `prism <resource> <action>`. For full recipes, see [references/cli.md](references/cli.md):
-subtasks, dependencies, recurrence, bulk changes, views, automations, sprints, meetings, polls, exports and
-`prism api`. When unsure, `prism schema` lists every command with its flags, scopes and output fields.
+subtasks, dependencies, recurrence, bulk changes, views, automations, sprints, meetings, polls, customers
+(contacts, notes, import, export), the noticeboard, exports and `prism api`. When unsure, `prism schema` lists every command with its flags, scopes and output fields.
 
 ## 5. MCP essentials
 

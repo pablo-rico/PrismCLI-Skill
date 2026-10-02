@@ -9,16 +9,14 @@ the browser, or creating and sharing a token.
 prism version     # "release build"
 ```
 
-If `prism` is not found, ask the user to install it. Any of these works:
+If `prism` is not found, ask the user to install it:
 
 ```bash
 npm install -g @misoncotech/prism          # Windows, macOS, Linux (Node.js 18+)
-brew install misoncotech/tap/prism         # macOS, Linux
-go install github.com/misoncotech/prism-cli@latest
 ```
 
-There are also archives on the GitHub releases of `misoncotech/prism-cli`. `npx @misoncotech/prism <args>` runs it
-without installing it.
+`npx @misoncotech/prism <args>` runs it without installing it. The step-by-step guide, with direct downloads when
+they are available, is the Tools page of Prism: https://prism.misoncotech.com/tools.
 
 Release builds only talk to the production API. `--api-url` / `PRISM_API_URL` pointing elsewhere fail with exit 2,
 and that is expected.
@@ -41,7 +39,9 @@ Pick one way to sign in:
   ```bash
   prism auth tokens create --name my-agent --scope read --scope tasks:write --expires 30d -q
   ```
-  Use it as `PRISM_TOKEN=prism_pat_...`. It takes precedence over the stored session and is never refreshed.
+  Add `--scope customers:write` to change customers (CRM) and `--scope noticeboard:write` to post on the
+  noticeboard. Use it as `PRISM_TOKEN=prism_pat_...`. It takes precedence over the stored session and is never
+  refreshed.
   Token management, sessions, password and billing need a browser session and fail with `SESSION_REQUIRED` when
   called with a token.
 

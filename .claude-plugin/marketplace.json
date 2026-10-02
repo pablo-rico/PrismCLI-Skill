@@ -9,7 +9,7 @@
     {
       "name": "prism",
       "source": "./plugins/prism",
-      "description": "Use Prism (projects, tasks, sprints, boards, meetings) through the prism CLI and its MCP server",
+      "description": "Use Prism (projects, tasks, sprints, boards, meetings, customers, noticeboard) through the prism CLI and its MCP server",
       "category": "productivity",
       "tags": ["prism", "project-management", "tasks", "mcp", "cli"]
     }

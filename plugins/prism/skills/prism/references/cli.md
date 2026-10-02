@@ -137,6 +137,56 @@ prism automation runs "Thank on done" -p $P --json --fields created_at,status,ta
 prism automation update "Thank on done" -p $P --disable
 ```
 
+## Customers (CRM)
+
+Customers are the companies a workspace works for: tax details, contacts (one primary), an internal owner and a
+dated notes history. They are **not** clients (`prism client` is the organization that owns workspaces).
+Members read them, editors write them (`customers:write`), guests cannot see them. Reference a customer by exact
+name, tax ID or ID; a contact by name, email or ID. A name or tax ID already used in the workspace fails with
+`CUSTOMER_EXISTS` (exit 6) and the hint names the existing customer.
+
+```bash
+prism customer list -w $WS --search acme --status active --mine --json --fields id,name,tax_id,owner
+prism customer show "Acme Corp" -w $WS --json          # contacts and linked projects
+C=$(prism customer create "Acme Corp" -w $WS --tax-id B12345678 --email hello@acme.test --owner me -q)
+prism customer update $C -w $WS --status active --website ""     # an empty value clears a field; --no-owner
+prism customer contact add $C "Laura Gómez" -w $WS --email laura@acme.test --job-title CTO --primary
+prism customer note add $C "Call: renewal in March" -w $WS
+prism customer note list $C -w $WS --json --fields body,author,created_at
+prism project update -p $P --customer "Acme Corp"      # link a project; --no-customer unlinks it
+prism customer delete $C -w $WS --yes                  # only when the user asked for it
+```
+
+Imports (CSV or .xlsx, up to 5 MB and 5,000 rows) never guess the columns: preview the file, show the user the
+columns and the suggested mapping, and import with the mapping they confirm. Only mapped columns are imported;
+one must be `name`. Fields: `name`, `status`, `tax_id`, `email`, `phone`, `website`, `address`, `city`,
+`postal_code`, `country`, `notes`, `owner_email`, `contact_name`, `contact_email`, `contact_phone`,
+`contact_job_title`.
+
+```bash
+prism customer import-preview clientes.xlsx -w $WS     # columns, examples and a suggested import line
+prism customer import clientes.xlsx -w $WS --map 'Razón social=name' --map CIF=tax_id --map '#4=contact_email' --json
+# --map 'Header=field' (case-insensitive) or '#N=field' (1-based); --no-header, --sheet, --default-status
+```
+
+The result lists `created`, `skipped` (already existing: `duplicate_name`, `duplicate_tax_id`,
+`duplicate_in_file`), `errors` (`missing_name`, `invalid_status`, `invalid_email`) and `warnings` by row.
+
+## Noticeboard
+
+Each workspace has a noticeboard of announcements, incidents and notes (Markdown). Only workspace admins post,
+edit, pin and delete, and **every post notifies all members**. Editors resolve and reopen incidents and create
+their task. Reference an entry by exact title or ID.
+
+```bash
+prism noticeboard list -w $WS --kind incident --status open --json --fields id,title,severity,task
+prism noticeboard list -w $WS --highlights                 # pinned entries and open incidents (dashboard)
+I=$(prism noticeboard post "Payments API down" -w $WS --kind incident --severity high --body-file incident.md -q)
+prism noticeboard task $I -w $WS -p $P --assignee me       # task with priority from severity; needs tasks:write
+prism noticeboard resolve $I -w $WS                        # or reopen
+prism noticeboard edit $I -w $WS --pinned=false            # editing does not notify
+```
+
 ## Meetings, notifications, search and activity
 
 ```bash
@@ -161,6 +211,7 @@ The API generates the CSV. The CLI never overwrites a file without `--force`.
 ```bash
 prism export tasks -p $P --open --assignee me -O mine.csv
 prism export time -p $P --from 2026-09-01 --to 2026-09-30 -O -
+prism export customers -w $WS --status active -O customers.csv   # same as `prism customer export`
 ```
 
 ## Anything else: `prism api`

@@ -1,14 +1,14 @@
 {
   "name": "prism",
   "displayName": "Prism",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Teaches Claude to use Prism through the prism CLI and registers its MCP server (read-only)",
   "author": {
     "name": "MisoncoTech",
     "url": "https://prism.misoncotech.com"
   },
-  "homepage": "https://github.com/misoncotech/prism-skills",
-  "repository": "https://github.com/misoncotech/prism-skills",
+  "homepage": "https://github.com/pablo-rico/PrismCLI-Skill",
+  "repository": "https://github.com/pablo-rico/PrismCLI-Skill",
   "license": "UNLICENSED",
-  "keywords": ["prism", "project-management", "tasks", "sprints", "mcp", "cli"]
+  "keywords": ["prism", "project-management", "tasks", "sprints", "crm", "customers", "mcp", "cli"]
 }

@@ -1,11 +1,12 @@
 # Prism skills for Claude and Codex
 
 Lets Claude (Claude Code, Claude Desktop, claude.ai) and OpenAI Codex work in [Prism](https://prism.misoncotech.com):
-projects, tasks, subtasks, dependencies, sprints, boards, time tracking, automations, meetings and notifications.
+projects, tasks, subtasks, dependencies, sprints, boards, time tracking, automations, meetings, notifications,
+customers (CRM) and the workspace noticeboard.
 
 The `prism` plugin contains:
 
-- **The `prism` skill.** It teaches the agent to use the [prism CLI](https://github.com/misoncotech/prism-cli),
+- **The `prism` skill.** It teaches the agent to use the [prism CLI](https://www.npmjs.com/package/@misoncotech/prism),
   the Prism MCP tools, or both:
   - which interface to pick;
   - the setup and login checks;
@@ -20,7 +21,7 @@ The `prism` plugin contains:
 - **The prism CLI**, installed and signed in on the same machine. MCP runs locally over stdio: there is no remote
   Prism MCP endpoint.
   ```bash
-  npm install -g @misoncotech/prism     # or: brew install misoncotech/tap/prism
+  npm install -g @misoncotech/prism     # guide: prism.misoncotech.com/tools
   prism auth login                      # approve the device at prism.misoncotech.com/device
   ```
 - **Optionally, a personal access token for agents.** Export it as `PRISM_TOKEN` in the environment that starts
@@ -34,24 +35,24 @@ The `prism` plugin contains:
 ### Claude Code (plugin: skill + MCP)
 
 ```text
-/plugin marketplace add misoncotech/prism-skills
+/plugin marketplace add pablo-rico/PrismCLI-Skill
 /plugin install prism@misoncotech
 ```
 
-Or from a shell: `claude plugin marketplace add misoncotech/prism-skills` and then
+Or from a shell: `claude plugin marketplace add pablo-rico/PrismCLI-Skill` and then
 `claude plugin install prism@misoncotech`.
 
 ### Codex (plugin: skill + MCP)
 
 ```bash
-codex plugin marketplace add misoncotech/prism-skills
+codex plugin marketplace add pablo-rico/PrismCLI-Skill
 codex plugin add prism@misoncotech
 ```
 
 ### Skill only (Claude Code and Codex, no marketplace)
 
 ```bash
-git clone https://github.com/misoncotech/prism-skills && cd prism-skills
+git clone https://github.com/pablo-rico/PrismCLI-Skill && cd PrismCLI-Skill
 scripts/install-skill.sh            # links into ~/.claude/skills and ~/.agents/skills (--claude / --codex / --copy)
 claude mcp add prism -- prism mcp serve --read-only    # optional: the MCP tools
 codex mcp add prism -- prism mcp serve --read-only
