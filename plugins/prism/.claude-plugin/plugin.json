@@ -1,7 +1,7 @@
 {
   "name": "prism",
   "displayName": "Prism",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Teaches Claude to use Prism through the prism CLI and registers its MCP server (read-only)",
   "author": {
     "name": "MisoncoTech",

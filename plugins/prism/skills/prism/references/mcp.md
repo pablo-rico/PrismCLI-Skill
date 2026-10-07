@@ -36,7 +36,7 @@ Parameters marked * are required. Scope is the personal access token scope the t
 | `list_projects` | workspace_id, limit | Projects of a workspace |
 | `get_project` | project_id | One project |
 | `list_templates` | workspace_id, limit | Built-in and saved project templates |
-| `create_project` (`projects:write`) | workspace_id, name*, description, visibility, template, customer_id | New project, optionally from a template and linked to a customer |
+| `create_project` (`projects:write`) | workspace_id, name*, description, visibility, team_ids, template, customer_id | New project, optionally from a template, linked to a customer and in one or more teams (visibility `team` needs at least one) |
 | `search` | q*, workspace_id, types, limit | Full text over tasks, projects, meetings, comments |
 
 ### Tasks (scope `read` / `tasks:write`)
@@ -45,9 +45,13 @@ Parameters marked * are required. Scope is the personal access token scope the t
 |---|---|---|
 | `list_statuses` | project_id, sprint | **Call first**: the project's columns with key, name, category and task_count |
 | `list_tasks` | project_id, status, category, completed, priority, assignee, assignees, unassigned, created_by, tags, custom_fields, sprint, q, due_before, due_after, view, sort, limit | Filtered task list |
-| `get_task` | task_id* | Task with assignees and checklist |
-| `create_task` | project_id, title*, description, status, priority, assignee_ids, sprint_id, due_date, story_points, parent_id, tags, checklist | Create; added to the active sprint unless sprint_id; parent_id makes a subtask |
-| `update_task` | task_id*, title, description, status, priority, due_date, story_points, tags | Edit fields |
+| `get_task` | task_id* | Task with assignees, reviewers and checklist; task_id accepts a key (`PRM-12`) |
+| `create_task` | project_id, title*, description, status, priority, assignee_ids, reviewer_ids, sprint_id, due_date, story_points, parent_id, tags, checklist | Create; added to the active sprint unless sprint_id; parent_id makes a subtask |
+| `update_task` | task_id*, title, description, status, priority, due_date, story_points, tags, reviewer_ids | Edit fields; reviewer_ids replaces the reviewers ([] removes them) |
+| `list_tasks_to_review` | workspace_id, limit | Tasks in review columns the user may review |
+| `list_reviewers` | project_id | Who may review the project's tasks (the only valid reviewer_ids) |
+| `approve_review` | task_id*, status | Task in review to a done column (the first, or `status`); only a reviewer |
+| `request_changes` | task_id*, comment* | Comment and send a task in review back to the column it came from |
 | `move_task` | task_id*, status, column_id, sprint_id | Move to another column and/or sprint |
 | `assign_task` | task_id*, user_ids*, remove | Assign, or unassign with remove=true |
 | `bulk_update_tasks` | project_id, task_ids*, op*, status, priority, sprint_id, due_date, add_assignees, remove_assignees, add_tags, remove_tags | Up to 200 tasks in one transaction (update, archive, unarchive) |
@@ -69,7 +73,6 @@ Parameters marked * are required. Scope is the personal access token scope the t
 | `list_sprints` | read | project_id | Sprints, newest first (is_active marks the active one) |
 | `get_board` | read | project_id, sprint_id | Kanban columns with their tasks |
 | `list_automations` | read | project_id | Automations with trigger, conditions, actions, last run |
-| `automation_runs` | read | project_id, automation*, limit | Latest runs: success, error, skipped |
 | `create_automation` | projects:write | project_id, automation* | The API body as a JSON object |
 | `list_meetings` / `get_meeting` | read | workspace_id, limit / meeting_id* | Meetings with participants, notes, polls |
 | `add_meeting_note` | meetings:write | meeting_id*, content* | |
@@ -77,6 +80,19 @@ Parameters marked * are required. Scope is the personal access token scope the t
 | `list_notifications` / `mark_notification_read` | read / notifications:write | unread, limit / notification_id or all | |
 | `list_activity` | read | client_id, resource_type, action, since, limit | Audit log of a client |
 | `activity_feed` | read | workspace_id, project_id, actor, resource_type, action, limit | Workspace feed the user can see |
+
+### Roadmaps and GitHub Actions
+
+| Tool | Scope | Parameters | Use |
+|---|---|---|---|
+| `list_roadmaps` / `get_roadmap` | read | workspace_id, limit / roadmap_id* | Roadmaps with components, linked tasks and dependencies |
+| `link_roadmap_component` / `unlink_roadmap_component` | tasks:write | task_id*, component_id*, roadmap_id / task_id* | The task must be in its project's active sprint |
+| `list_github_runs` | read | project_id, workspace_wide, status, limit | Latest Actions runs; status filters by status or conclusion |
+| `get_github_run_jobs` / `get_github_job_log` | read | project_id, run_id* (+ job_id*) | Jobs and steps / last 200 log lines; run_id accepts `#128` |
+| `github_run_action` | projects:write | project_id, run_id*, action* (rerun, rerun-failed, cancel) | Needs github.actions.run |
+| `dispatch_github_workflow` | projects:write | project_id, workflow_id*, ref, inputs | Runs a workflow_dispatch workflow |
+| `list_github_pulls` | read | project_id, state, limit | Pull requests with checks and linked task keys |
+| `get_task_github` / `link_task_github` / `unlink_task_github` | read / tasks:write | task_id* (+ pull_request or branch, repository_id / link_id*) | A task's issue, PRs, branches and commits |
 
 ### Customers (CRM) and noticeboard
 
@@ -98,7 +114,7 @@ looked up in `workspace_id` (default: the CLI context).
 | `resolve_incident` / `reopen_incident` | noticeboard:write | workspace_id, entry_id* | |
 | `create_task_from_incident` | tasks:write | workspace_id, entry_id*, project_id, title, priority, assignee_ids | Returns {entry, task}; one live task per incident |
 
-**Not available over MCP** (use the CLI): workspaces and members, column and sprint management, attachments,
+**Not available over MCP** (use the CLI): workspaces and members, column and sprint management, roadmap editing, attachments,
 custom field definitions, CSV exports, customer imports and deletions, editing or deleting noticeboard entries,
 saving a project as a template, tokens and sessions, and raw API calls.
 
@@ -106,7 +122,11 @@ saving a project as a template, tokens and sessions, and raw API calls.
 
 - **"What should I work on?"**: `whoami`, then `list_tasks` with `assignee: "me"`, `sprint: "active"` and
   `completed: false`.
-- **Move a task to review**: `list_statuses` to find the review column key, then `move_task` with that status.
+- **Move a task to review**: `list_statuses` to find the column with category `review`, then `move_task` with its key.
+- **Review a task**: `list_tasks_to_review`, `get_task`, then `approve_review` or `request_changes` with a comment
+  (never `move_task` out of a review column: it fails with `REVIEW_REQUIRED` unless the user is a reviewer).
+- **A red build**: `list_github_runs` with `status: "failure"`, `get_github_run_jobs`, `get_github_job_log`, then
+  `github_run_action` with `rerun-failed` if the user asks.
 - **Triage**: `list_tasks` with `unassigned: true` and `category: ["todo"]`, then `bulk_update_tasks` with
   `op: "update"`, `priority` and `add_assignees`.
 - **Sprint status**: `get_board`, or `list_statuses` for the counts per column.

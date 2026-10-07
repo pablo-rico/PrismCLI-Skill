@@ -11,8 +11,8 @@ The CLI exits with these codes. In machine mode it writes one JSON object to std
 | 2 | `USAGE_ERROR` | Bad flags or arguments, an ambiguous reference, or a missing `--yes` | Fix the call. For ambiguity, pick an ID from `error.details.candidates`. An unknown status lists the valid ones |
 | 3 | `NOT_AUTHENTICATED`, `TOKEN_EXPIRED`, `SESSION_REVOKED` | No or invalid credentials | See [setup.md](setup.md#2-is-it-authenticated). Do not loop |
 | 4 | `NOT_FOUND` | The resource does not exist or the user cannot see it | Re-list and resolve the reference again |
-| 5 | `FORBIDDEN`, `INSUFFICIENT_SCOPE`, `SESSION_REQUIRED`, `APPROVAL_REQUIRED` | No permission | `INSUFFICIENT_SCOPE`: the token needs `error.details.required_scope`. `SESSION_REQUIRED`: use a browser login, not a token. `APPROVAL_REQUIRED`: the column needs the `task.approve` permission |
-| 6 | `VALIDATION_ERROR`, `CONFLICT`, `DEPENDENCY_CYCLE`... | Invalid data or a conflict | Read `message` / `details` and correct the input |
+| 5 | `FORBIDDEN`, `INSUFFICIENT_SCOPE`, `SESSION_REQUIRED`, `APPROVAL_REQUIRED`, `REVIEW_REQUIRED` | No permission | `INSUFFICIENT_SCOPE`: the token needs `error.details.required_scope`. `SESSION_REQUIRED`: use a browser login, not a token. `APPROVAL_REQUIRED`: the column needs the `task.approve` permission. `REVIEW_REQUIRED`: the task is in a review column (`error.details.column`); only a reviewer takes it out, with `task review approve` / `changes` |
+| 6 | `VALIDATION_ERROR`, `CONFLICT`, `DEPENDENCY_CYCLE`, `TASK_NOT_IN_REVIEW`, `INVALID_REVIEWER`, `NOT_IN_ACTIVE_SPRINT`... | Invalid data or a conflict | Read `message` / `details` and correct the input. `INVALID_REVIEWER`: pick one from `task review reviewers` / `list_reviewers`. `NOT_IN_ACTIVE_SPRINT`: only tasks of the active sprint link to a roadmap component |
 | 7 | `RATE_LIMITED` | Too many requests, after the CLI's own retries | Wait (`Retry-After`) and try once more |
 | 8 | `NETWORK_ERROR` | API unreachable or timeout | See "Network" below |
 | 9 | `SERVER_ERROR` | API failure | Retry later. Report `request_id` to the user |

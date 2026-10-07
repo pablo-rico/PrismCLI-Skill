@@ -1,6 +1,6 @@
 {
   "name": "prism",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Teaches Codex to use Prism through the prism CLI and registers its MCP server (read-only)",
   "author": {
     "name": "MisoncoTech",

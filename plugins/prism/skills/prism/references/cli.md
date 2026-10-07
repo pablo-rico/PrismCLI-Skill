@@ -60,6 +60,23 @@ prism task assign $T me ana@example.com
 prism task unassign $T ana@example.com
 prism task archive $T
 prism task delete $T --yes                      # only when the user asked for it
+prism task show PRM-12 --json                   # a task key works anywhere, without -p
+```
+
+## Review
+
+Tasks in a column of category `review` are open and leave it only through a reviewer: `task.review` in the
+workspace, access to the project and, when the task has reviewers, being one of them. Anyone else gets
+`REVIEW_REQUIRED` (exit 5), also with `task move`.
+
+```bash
+prism column update review -p $P --category review      # turn an old in_progress "Review" column into one
+T=$(prism task create "Ship v2" -p $P --status review --reviewer ana@example.com -q)
+prism task update $T --reviewer me --reviewer luis@example.com   # replaces the reviewers; --clear-reviewers
+prism task review reviewers -p $P --json                # who may be a reviewer
+prism task to-review -w $WS --json --fields id,key,title,reviewers
+prism task review approve $T                            # to the first done column (or --column <done column>)
+prism task review changes $T -m "Add tests for the empty case"   # comment + back to the column it came from
 ```
 
 `task list` filters: `--status`, `--category`, `--open`, `--completed`, `--priority`, `--assignee`,
@@ -117,17 +134,37 @@ prism task bulk archive -p $P --view "Done this sprint" -q
 ```bash
 prism board show -p $P --summary                 # task count per column in the active sprint
 prism board show -p $P --json --jq '.columns[] | {name, category, tasks: [.tasks[].title]}'
-prism column create "QA" -p $P --category in_progress
+prism column create "QA" -p $P --category in_progress      # categories: todo, in_progress, review, done
 prism column delete qa -p $P --move-to review --yes   # a column with tasks needs --move-to
 prism sprint current -p $P --json
 prism sprint create "Sprint 12" -p $P --start 2026-10-01 --end 2026-10-14 --from active -q
 prism sprint close <sprint> -p $P
 ```
 
+## Roadmaps and GitHub Actions
+
+```bash
+prism roadmap list -w $WS --json
+prism roadmap show "Q4 2026" -w $WS                 # its components
+prism roadmap component add "Q4 2026" "Billing v2" --target 2026-11-30
+prism task roadmap link PRM-12 "Billing v2"         # the task must be in its project's active sprint
+
+prism github runs -p $P --status failure --json --fields id,run_number,workflow_name,branch,html_url
+prism github jobs -p $P "#128" --json               # job IDs and steps
+prism github log -p $P "#128" <job-id>              # last 200 lines, plain text
+prism github rerun -p $P "#128" --failed            # rerun, cancel and dispatch need github.actions.run
+prism github dispatch -p $P deploy.yml --ref main -f environment=staging
+prism github prs -p $P --state open --json
+prism task github show PRM-12                       # PRs and branches linked to a task
+```
+
 ## Projects, templates and automations
 
 ```bash
 prism project create "Mobile app" -w $WS --template scrum -q    # builtin:scrum|kanban|bugs or a saved one
+prism project create API -w $WS --visibility team --team $TEAM1 --team $TEAM2 -q   # team visibility needs >= 1 team
+prism project update -p $P --team $TEAM2              # replaces the set of teams; --no-teams clears it
+prism team projects $TEAM1 --json --fields id,name,teams   # --add/--remove <project> link or unlink (repeatable)
 prism template list -w $WS --json
 prism template save -p $P --name "Client onboarding" --include-tasks -q
 
@@ -220,6 +257,7 @@ prism export customers -w $WS --status active -O customers.csv   # same as `pris
 prism api /auth/me
 prism api POST /tasks/$T/comments -f content="Hello"
 prism api /projects/$P/tasks --paginate --jq '.[].title'
+prism api /workspaces/$WS/whiteboards -f summary=true   # whiteboards (types incl. marketing): read-only with a token
 ```
 
 `prism api` adds authentication, retries and the `/api/v1` prefix. Use it only when no dedicated command exists.
